@@ -8,7 +8,6 @@ import bcrypt from 'bcryptjs';
 const allowCors = (fn) => async (req, res) => {
     res.setHeader('Access-Control-Allow-Credentials', true);
     //res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
-    //res.setHeader('Access-Control-Allow-Origin', 'http://weiqi.blackrice.pro'); // Set to your frontend origin
     res.setHeader('Access-Control-Allow-Origin', 'http://weiqi.blackrice.top'); 
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS'); // Allow specific methods
     res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
