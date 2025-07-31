@@ -2,7 +2,7 @@ import passport from 'passport';
 import { Strategy as LocalStrategy } from 'passport-local';
 import localStrategy from './local-strategy.js';
 import bcrypt from 'bcryptjs';
-import User from '../models/User.js';
+import User from './User';
 
 export default function(passport) {
   console.log('Configuring Passport, 我想确保看到somethign, passport.js line 8');
