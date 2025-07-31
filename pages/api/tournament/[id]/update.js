@@ -1,6 +1,6 @@
 // pages/api/tournament/[id]/update.js
-import dbConnect from '../../../../lib/mongodb.js';
-import Tournament from '../../../../models/Tournament';
+import dbConnect from '@/lib/mongodb.js';
+import Tournament from '@/models/Tournament';
 
 export default async function handler(req, res) {
   await dbConnect();

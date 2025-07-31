@@ -2,17 +2,25 @@
 import mongoose from 'mongoose';
 
 const TournamentSchema = new mongoose.Schema({
-  TournamentName: {
-    type: String,
-    required: true,
-  },
-  TournamentStartDate: {
-    type: Date,
-    required: true,
+  name: { 
+    type: String, 
+    required: true 
   },
   location: {
     type: String,
     required: true,
+  },
+  date: { 
+    type: Date, 
+    required: true 
+  },
+  TournamentName: {
+    type: String,
+    required: false,
+  },
+  TournamentStartDate: {
+    type: Date,
+    required: false,
   },
   entry_conditions: {
     type: String,
@@ -20,7 +28,7 @@ const TournamentSchema = new mongoose.Schema({
   },
   format: {
     type: String,
-    required: true,
+    required: false,
     enum: ['Single Round Robin', 'Double Round Robin', 'Swiss System', 'Knockout', 'Other'],
   },
   max_participants: {
@@ -30,14 +38,6 @@ const TournamentSchema = new mongoose.Schema({
   registration_deadline: {
     type: Date,
     required: false,
-  },
-  name: { 
-    type: String, 
-    required: true 
-  },
-  date: { 
-    type: Date, 
-    required: true 
   },
   createdAt: {
     type: Date,

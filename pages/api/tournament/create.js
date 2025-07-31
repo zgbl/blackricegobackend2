@@ -1,6 +1,6 @@
 // pages/api/tournament/create.js
-import dbConnect from '../../../lib/mongodb.js';
-import Tournament from '../../../models/Tournament';
+import dbConnect from '@/lib/mongodb.js';
+import Tournament from '@/models/Tournament';
 import allowCors from '../withCors.js';
 
 async function handler(req, res) {
