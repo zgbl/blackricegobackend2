@@ -4,12 +4,14 @@ import User from '../../models/User';
 import Cors from 'cors';
 import bcrypt from 'bcryptjs';
 
+
 const allowedOrigins = [
   'http://weiqi.blackrice.top',    // 开发阶段可能从HTTP访问
   'http://forum.blackrice.top',    // 开发阶段可能从HTTP访问
   'https://weiqi.blackrice.top',   // 生产环境通过HTTPS访问
   'https://forum.blackrice.top',   // 生产环境通过HTTPS访问
   'http://localhost:3000',         // 本地开发环境
+  'https://localhost:3000'              // 本地开发 HTTPS
 ];
 
 // Custom CORS middleware to handle preflight requests and set headers

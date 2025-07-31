@@ -3,7 +3,9 @@ const allowedOrigins = [
   'http://forum.blackrice.top',    // 开发阶段可能从HTTP访问
   'https://weiqi.blackrice.top',   // 生产环境通过HTTPS访问
   'https://forum.blackrice.top',   // 生产环境通过HTTPS访问
+  'https://zgbl.github.io',             // GitHub Pages
   'http://localhost:3000',         // 本地开发环境
+  'https://localhost:3000'              // 本地开发 HTTPS
 ];
 
 const allowCors = fn => async (req, res) => {
