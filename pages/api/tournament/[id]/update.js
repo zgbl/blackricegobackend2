@@ -2,7 +2,8 @@
 //import dbConnect from '@/lib/mongodb.js';
 //import Tournament from '@/models/Tournament';
 import dbConnect from '../../../../lib/mongodb.js';
-import Tournament from '../../../../models/Tournament.js';
+//import Tournament from '../../../../models/Tournament.js';
+import tournament from '../../../../models/tournament.js';
 
 export default async function handler(req, res) {
   await dbConnect();

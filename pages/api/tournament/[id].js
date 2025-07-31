@@ -1,6 +1,7 @@
 // pages/api/tournament/[id].js
 import dbConnect from '../../../lib/mongodb.js';
-import Tournament from '../../../models/Tournament.js';
+//import tournament from '@/models/tournament.js';
+import tournament from '../../../models/tournament.js';
 
 export default async function handler(req, res) {
   const { method } = req;
