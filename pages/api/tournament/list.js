@@ -5,6 +5,7 @@
 import dbConnect from '../../../lib/mongodb.js';
 //import Tournament from '../../../models/Tournament.js';
 import tournament from '../../../models/tournament.js';
+import allowCors from '../withCors.js'; 
 
 async function handler(req, res) {
     if (req.method === 'GET') {
