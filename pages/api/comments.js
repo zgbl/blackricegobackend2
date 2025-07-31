@@ -2,10 +2,23 @@
 import dbConnect from '../../lib/mongodb';
 import Comment from '../../models/Comment'; // Assuming you have a Comment model similar to User
 
+const allowedOrigins = [
+  'http://weiqi.blackrice.top',    // 开发阶段可能从HTTP访问
+  'http://forum.blackrice.top',    // 开发阶段可能从HTTP访问
+  'https://weiqi.blackrice.top',   // 生产环境通过HTTPS访问
+  'https://forum.blackrice.top',   // 生产环境通过HTTPS访问
+  'http://localhost:3000',         // 本地开发环境
+];
+
 // Custom CORS middleware to handle preflight requests and set headers
 const allowCors = (fn) => async (req, res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*'); // Allow all origins
+  
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+  
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS'); // Allow specific methods
   res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
