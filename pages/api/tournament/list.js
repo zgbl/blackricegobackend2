@@ -3,8 +3,8 @@
 //import Tournament from '@/models/Tournament';
 //import allowCors from '../withCors.js';
 import dbConnect from '../../../lib/mongodb.js';
-import Tournament from '../../../models/Tournament.js';
-import allowCors from '../withCors.js';
+//import Tournament from '../../../models/Tournament.js';
+import tournament from '../../../models/tournament.js';
 
 async function handler(req, res) {
     if (req.method === 'GET') {
