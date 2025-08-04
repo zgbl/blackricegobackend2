@@ -39,7 +39,8 @@ next-env.d.ts
 .env.local
 
 # Releases, No need to upload to Github
-Releases
+releases/
+Releases/
 
 #Other files should be ignored
 .DS_Store

@@ -34,3 +34,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
+项目备份：
+
+# 方法 1: 使用 npm 脚本 (推荐)
+
+npm run backup
+
+# 方法 2: 使用 bash 脚本
+
+chmod +x backup.sh
+./backup.sh
+
+# 方法 3: 直接运行 Node.js 脚本
+
+node scripts/backup.js
