@@ -1,0 +1,62 @@
+// pages/api/katago/health.js
+import allowCors from '../withCors';
+
+async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const katagoServerUrl = 'http://192.168.0.249:8080';
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    
+    const response = await fetch(`${katagoServerUrl}/health`, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: {
+        'Accept': 'text/plain, application/json',
+      }
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = await response.text();
+      res.status(200).json({
+        success: true,
+        status: 'healthy',
+        serverUrl: katagoServerUrl,
+        response: data,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(response.status).json({
+        success: false,
+        status: 'unhealthy',
+        serverUrl: katagoServerUrl,
+        httpStatus: response.status,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+  } catch (error) {
+    console.error('KataGo health check error:', error);
+    
+    let status = 'unreachable';
+    if (error.name === 'AbortError') {
+      status = 'timeout';
+    }
+    
+    res.status(503).json({
+      success: false,
+      status: status,
+      error: error.message,
+      serverUrl: 'http://192.168.0.249:8080',
+      timestamp: new Date().toISOString()
+    });
+  }
+}
+
+export default allowCors(handler);
