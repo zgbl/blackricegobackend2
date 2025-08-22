@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试题API调试工具</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 10px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+        .error {
+            border-color: #dc3545;
+            background-color: #f8d7da;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        textarea {
+            height: 100px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>测试题API调试工具</h1>
+    
+    <!-- 创建测试题 -->
+    <div class="container">
+        <h2>1. 创建测试题 (POST /api/testQuestions)</h2>
+        <button onclick="createSampleQuestion()">创建示例测试题</button>
+        <button onclick="createBatchQuestions()">批量创建测试题</button>
+        <div id="createResult" class="result"></div>
+    </div>
+
+    <!-- 获取测试题列表 -->
+    <div class="container">
+        <h2>2. 获取测试题列表 (GET /api/testQuestions)</h2>
+        <div>
+            <label>页码: <input type="number" id="page" value="1" min="1"></label>
+            <label>每页数量: <input type="number" id="limit" value="10" min="1" max="100"></label>
+            <label>难度筛选: 
+                <select id="difficulty">
+                    <option value="">全部</option>
+                    <option value="easy">简单</option>
+                    <option value="medium">中等</option>
+                    <option value="hard">困难</option>
+                </select>
+            </label>
+            <label>SGF哈希: <input type="text" id="sgfHash" placeholder="可选"></label>
+        </div>
+        <button onclick="getQuestionsList()">获取列表</button>
+        <div id="listResult" class="result"></div>
+    </div>
+
+    <!-- 获取单个测试题 -->
+    <div class="container">
+        <h2>3. 获取单个测试题 (GET /api/testQuestions/:id)</h2>
+        <label>测试题ID: <input type="text" id="questionId" placeholder="例如: test_hash_1"></label>
+        <button onclick="getQuestionDetail()">获取详情</button>
+        <div id="detailResult" class="result"></div>
+    </div>
+
+    <!-- 获取统计信息 -->
+    <div class="container">
+        <h2>4. 获取统计信息 (GET /api/testQuestions/stats)</h2>
+        <button onclick="getStats()">获取统计</button>
+        <div id="statsResult" class="result"></div>
+    </div>
+
+    <!-- 删除测试题 -->
+    <div class="container">
+        <h2>5. 删除SGF的所有测试题 (DELETE /api/testQuestions/sgf/:sgfHash)</h2>
+        <label>SGF哈希: <input type="text" id="deleteSgfHash" placeholder="要删除的SGF哈希"></label>
+        <button onclick="deleteQuestionsBySgf()" style="background: #dc3545;">删除测试题</button>
+        <div id="deleteResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+
+        // 显示结果
+        function showResult(elementId, data, isSuccess = true) {
+            const element = document.getElementById(elementId);
+            element.textContent = JSON.stringify(data, null, 2);
+            element.className = `result ${isSuccess ? 'success' : 'error'}`;
+        }
+
+        // 创建示例测试题
+        async function createSampleQuestion() {
+            const sampleData = {
+                questions: [
+                    {
+                        id: "test_hash_" + Date.now(),
+                        sgfHash: "test_hash_123",
+                        sgfFilename: "test_game.sgf",
+                        moveNumber: 15,
+                        boardState: Array(19).fill().map(() => Array(19).fill(null)),
+                        currentPlayer: "black",
+                        candidatePoints: [
+                            {
+                                type: "actual",
+                                position: "Q16",
+                                row: 3,
+                                col: 16,
+                                winRate: 45.2,
+                                description: "实战选点"
+                            },
+                            {
+                                type: "best",
+                                position: "D4",
+                                row: 15,
+                                col: 3,
+                                winRate: 52.8,
+                                description: "最佳选点"
+                            }
+                        ],
+                        correctAnswer: {
+                            position: "D4",
+                            winRate: 52.8,
+                            explanation: "最佳选点，胜率: 52.8%"
+                        },
+                        winRateLoss: 7.6,
+                        difficulty: "easy",
+                        questionText: "第15手，黑方下一步最佳选择是？"
+                    }
+                ],
+                metadata: {
+                    sgfHash: "test_hash_123",
+                    sgfFilename: "test_game.sgf",
+                    totalQuestions: 1
+                }
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/testQuestions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sampleData)
+                });
+                const result = await response.json();
+                showResult('createResult', result, response.ok);
+            } catch (error) {
+                showResult('createResult', { error: error.message }, false);
+            }
+        }
+
+        // 批量创建测试题
+        async function createBatchQuestions() {
+            const batchData = {
+                questions: [
+                    {
+                        id: "batch_test_1_" + Date.now(),
+                        sgfHash: "batch_hash_456",
+                        sgfFilename: "batch_game.sgf",
+                        moveNumber: 10,
+                        boardState: Array(19).fill().map(() => Array(19).fill(null)),
+                        currentPlayer: "white",
+                        candidatePoints: [
+                            { type: "actual", position: "Q4", row: 15, col: 16, winRate: 48.5, description: "实战" },
+                            { type: "best", position: "D16", row: 3, col: 3, winRate: 55.2, description: "最佳" }
+                        ],
+                        correctAnswer: { position: "D16", winRate: 55.2, explanation: "最佳选择" },
+                        winRateLoss: 6.7,
+                        difficulty: "medium",
+                        questionText: "第10手，白方最佳选择？"
+                    },
+                    {
+                        id: "batch_test_2_" + Date.now(),
+                        sgfHash: "batch_hash_456",
+                        sgfFilename: "batch_game.sgf",
+                        moveNumber: 25,
+                        boardState: Array(19).fill().map(() => Array(19).fill(null)),
+                        currentPlayer: "black",
+                        candidatePoints: [
+                            { type: "actual", position: "K10", row: 9, col: 10, winRate: 42.1, description: "实战" },
+                            { type: "best", position: "L12", row: 7, col: 11, winRate: 58.9, description: "最佳" }
+                        ],
+                        correctAnswer: { position: "L12", winRate: 58.9, explanation: "控制中央" },
+                        winRateLoss: 16.8,
+                        difficulty: "hard",
+                        questionText: "第25手，黑方如何应对？"
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/testQuestions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(batchData)
+                });
+                const result = await response.json();
+                showResult('createResult', result, response.ok);
+            } catch (error) {
+                showResult('createResult', { error: error.message }, false);
+            }
+        }
+
+        // 获取测试题列表
+        async function getQuestionsList() {
+            const page = document.getElementById('page').value;
+            const limit = document.getElementById('limit').value;
+            const difficulty = document.getElementById('difficulty').value;
+            const sgfHash = document.getElementById('sgfHash').value;
+
+            let url = `${API_BASE}/testQuestions?page=${page}&limit=${limit}`;
+            if (difficulty) url += `&difficulty=${difficulty}`;
+            if (sgfHash) url += `&sgfHash=${encodeURIComponent(sgfHash)}`;
+
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                showResult('listResult', result, response.ok);
+            } catch (error) {
+                showResult('listResult', { error: error.message }, false);
+            }
+        }
+
+        // 获取单个测试题详情
+        async function getQuestionDetail() {
+            const questionId = document.getElementById('questionId').value;
+            if (!questionId) {
+                showResult('detailResult', { error: '请输入测试题ID' }, false);
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/testQuestions/${encodeURIComponent(questionId)}`);
+                const result = await response.json();
+                showResult('detailResult', result, response.ok);
+            } catch (error) {
+                showResult('detailResult', { error: error.message }, false);
+            }
+        }
+
+        // 获取统计信息
+        async function getStats() {
+            try {
+                const response = await fetch(`${API_BASE}/testQuestions/stats`);
+                const result = await response.json();
+                showResult('statsResult', result, response.ok);
+            } catch (error) {
+                showResult('statsResult', { error: error.message }, false);
+            }
+        }
+
+        // 删除SGF的所有测试题
+        async function deleteQuestionsBySgf() {
+            const sgfHash = document.getElementById('deleteSgfHash').value;
+            if (!sgfHash) {
+                showResult('deleteResult', { error: '请输入SGF哈希值' }, false);
+                return;
+            }
+
+            if (!confirm(`确定要删除SGF "${sgfHash}" 的所有测试题吗？`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/testQuestions/sgf/${encodeURIComponent(sgfHash)}`, {
+                    method: 'DELETE'
+                });
+                const result = await response.json();
+                showResult('deleteResult', result, response.ok);
+            } catch (error) {
+                showResult('deleteResult', { error: error.message }, false);
+            }
+        }
+
+        // 页面加载时获取统计信息
+        window.onload = function() {
+            getStats();
+        };
+    </script>
+</body>
+</html>
