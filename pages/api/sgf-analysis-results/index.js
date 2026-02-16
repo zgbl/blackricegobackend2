@@ -20,20 +20,21 @@ async function handler(req, res) {
 // 获取 SGF 分析结果列表
 async function getSGFAnalysisResults(req, res) {
   try {
-    const { 
-      page = 1, 
-      limit = 10, 
-      status, 
+    const {
+      page = 1,
+      limit = 10,
+      status,
       search,
-      hash 
+      hash,
+      includeDetails
     } = req.query;
 
     const query = {};
-    
+
     // 筛选条件
     if (status) query['metadata.analysisStatus'] = status;
     if (hash) query['sgf.hash'] = hash;
-    
+
     // 搜索功能
     if (search) {
       query.$or = [
@@ -45,12 +46,18 @@ async function getSGFAnalysisResults(req, res) {
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
-    const results = await SGFAnalysisResult.find(query)
+
+    let queryBuilder = SGFAnalysisResult.find(query)
       .sort({ 'metadata.createdAt': -1 })
       .skip(skip)
-      .limit(parseInt(limit))
-      .select('-analysisResults -sgf.content'); // 列表不返回详细分析数据和SGF内容
+      .limit(parseInt(limit));
+
+    // 如果不包含详情，则排除大字段
+    if (includeDetails !== 'true') {
+      queryBuilder = queryBuilder.select('-analysisResults -sgf.content');
+    }
+
+    const results = await queryBuilder;
 
     const total = await SGFAnalysisResult.countDocuments(query);
 
@@ -66,10 +73,10 @@ async function getSGFAnalysisResults(req, res) {
     });
   } catch (error) {
     console.error('获取 SGF 分析结果列表失败:', error);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: '获取分析结果列表失败',
-      details: error.message 
+      details: error.message
     });
   }
 }
@@ -133,7 +140,7 @@ async function createSGFAnalysisResult(req, res) {
     });
   } catch (error) {
     console.error('创建 SGF 分析结果失败:', error);
-    
+
     // 处理重复键错误
     if (error.code === 11000) {
       return res.status(409).json({
@@ -141,11 +148,11 @@ async function createSGFAnalysisResult(req, res) {
         error: '该 SGF 文件的分析结果已存在'
       });
     }
-    
-    res.status(500).json({ 
-      success: false, 
+
+    res.status(500).json({
+      success: false,
       error: '保存分析结果失败',
-      details: error.message 
+      details: error.message
     });
   }
 }

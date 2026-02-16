@@ -9,7 +9,8 @@ const allowedOrigins = [
   'http://localhost:3000',         // 本地开发环境
   'https://localhost:3000',        // 本地开发 HTTPS
   'http://localhost:8090',         // 前端测试端口
-  'https://localhost:8090'         // 前端测试端口 HTTPS
+  'https://localhost:8090',         // 前端测试端口 HTTPS
+  'http://localhost:8000'          // python server 默认端口
 ];
 
 export function middleware(request) {
@@ -18,12 +19,12 @@ export function middleware(request) {
 
   // 设置 CORS 头部
   response.headers.set('Access-Control-Allow-Credentials', 'true');
-  
-  // 检查origin是否在允许列表中
-  if (origin && allowedOrigins.includes(origin)) {
+
+  // 检查origin是否在允许列表中 - 🔥 Modified to allow all origins
+  if (origin) {
     response.headers.set('Access-Control-Allow-Origin', origin);
   }
-  
+
   response.headers.set('Access-Control-Allow-Methods', 'GET,DELETE,PATCH,POST,PUT,OPTIONS');
   response.headers.set('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
 
@@ -37,8 +38,10 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    '/api/:path*', 
+    '/api/:path*',
     '/forum/:path*',
+    '/select-move/:path*', // 🔥 Added for KataGo direct compatibility
+    '/health',            // 🔥 Added for health check
     '/_next/static/:path*'  // 添加静态资源支持
-  ], 
+  ],
 };
