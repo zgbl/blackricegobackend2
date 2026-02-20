@@ -9,7 +9,7 @@ async function handler(req, res) {
   console.log('Method:', req.method);
   console.log('URL:', req.url);
   console.log('Headers:', JSON.stringify(req.headers, null, 2));
-  
+
   // 添加请求体日志
   if (req.method === 'POST') {
     console.log('请求体大小:', JSON.stringify(req.body).length, 'bytes');
@@ -45,7 +45,7 @@ async function handler(req, res) {
 async function createTestQuestions(req, res) {
   try {
     const { questions, metadata, overwrite = false } = req.body;
-    
+
     console.log('收到创建测试题请求:');
     console.log('- questions数量:', questions?.length || 0);
     console.log('- metadata:', metadata);
@@ -65,10 +65,10 @@ async function createTestQuestions(req, res) {
     // 在验证前添加数据预处理
     const processedQuestions = questions.map((question, index) => {
       console.log(`处理第${index + 1}个测试题:`, question.id);
-      
+
       // 处理winRate类型转换
       const processedQuestion = { ...question };
-      
+
       // 处理candidatePoints中的winRate
       if (processedQuestion.candidatePoints) {
         processedQuestion.candidatePoints = processedQuestion.candidatePoints.map(point => ({
@@ -76,17 +76,17 @@ async function createTestQuestions(req, res) {
           winRate: parseFloat(point.winRate) // 确保转换为数字
         }));
       }
-      
+
       // 处理correctAnswer中的winRate
       if (processedQuestion.correctAnswer && processedQuestion.correctAnswer.winRate) {
         processedQuestion.correctAnswer.winRate = parseFloat(processedQuestion.correctAnswer.winRate);
       }
-      
+
       // 处理winRateLoss
       if (processedQuestion.winRateLoss) {
         processedQuestion.winRateLoss = parseFloat(processedQuestion.winRateLoss);
       }
-      
+
       return processedQuestion;
     });
 
@@ -144,7 +144,7 @@ async function createTestQuestions(req, res) {
         });
 
         const saved = await testQuestion.save();
-        
+
         if (overwrite) {
           updatedIds.push(saved._id.toString());
           updatedCount++;
@@ -154,7 +154,7 @@ async function createTestQuestions(req, res) {
           insertedCount++;
           console.log(`✓ 创建测试题: ${questionData.id}`);
         }
-        
+
       } catch (error) {
         console.error(`✗ ${overwrite ? '覆盖' : '创建'}测试题失败 ${questionData.id}:`, error.message);
         if (error.code === 11000 && !overwrite) {
@@ -236,6 +236,7 @@ async function getTestQuestions(req, res) {
       page = 1,
       limit = 20,
       sgfHash,
+      moveNumber, // 添加 moveNumber 支持
       difficulty,
       sortBy = 'createdAt',
       sortOrder = 'desc',
@@ -250,6 +251,7 @@ async function getTestQuestions(req, res) {
     // 构建查询条件
     const filter = {};
     if (sgfHash) filter.sgfHash = sgfHash;
+    if (moveNumber) filter.moveNumber = parseInt(moveNumber); // 添加 moveNumber 过滤
     if (difficulty && ['easy', 'medium', 'hard'].includes(difficulty)) {
       filter.difficulty = difficulty;
     }
@@ -267,7 +269,7 @@ async function getTestQuestions(req, res) {
 
     // 构建查询
     let query = TestQuestion.find(filter);
-    
+
     // 根据includeDetails参数决定是否排除详细数据
     if (includeDetails === 'false' || includeDetails === false) {
       query = query.select('-boardState -candidatePoints -correctAnswer'); // 只有明确指定false才排除
@@ -275,7 +277,7 @@ async function getTestQuestions(req, res) {
     } else {
       console.log('✓ 使用完整模式，包含所有数据（包括boardState）');
     }
-    
+
     // 执行查询
     const [questions, totalItems] = await Promise.all([
       query
@@ -288,7 +290,7 @@ async function getTestQuestions(req, res) {
 
     // 添加详细的返回数据日志
     console.log(`✓ 查询完成: 找到${questions.length}个测试题，总计${totalItems}个`);
-    
+
     if (questions.length > 0) {
       const firstQuestion = questions[0];
       console.log('第一个题目的数据结构:');
@@ -299,7 +301,7 @@ async function getTestQuestions(req, res) {
       console.log('- 是否包含boardState:', !!firstQuestion.boardState);
       console.log('- 是否包含candidatePoints:', !!firstQuestion.candidatePoints);
       console.log('- 是否包含correctAnswer:', !!firstQuestion.correctAnswer);
-      
+
       if (firstQuestion.boardState) {
         console.log('- boardState类型:', typeof firstQuestion.boardState);
         console.log('- boardState长度:', Array.isArray(firstQuestion.boardState) ? firstQuestion.boardState.length : 'N/A');
@@ -307,7 +309,7 @@ async function getTestQuestions(req, res) {
           console.log('- boardState[0]长度:', Array.isArray(firstQuestion.boardState[0]) ? firstQuestion.boardState[0].length : 'N/A');
         }
       }
-      
+
       if (firstQuestion.candidatePoints) {
         console.log('- candidatePoints数量:', Array.isArray(firstQuestion.candidatePoints) ? firstQuestion.candidatePoints.length : 'N/A');
       }
@@ -332,7 +334,7 @@ async function getTestQuestions(req, res) {
         }
       }
     };
-    
+
     console.log('返回数据概要:');
     console.log('- questions数量:', responseData.data.questions.length);
     console.log('- 总页数:', responseData.data.pagination.totalPages);
@@ -373,9 +375,9 @@ function validateQuestionData(question) {
   if (!Array.isArray(question.boardState) || question.boardState.length !== 19) {
     errors.push('boardState必须是19x19的数组');
   } else {
-    const validBoard = question.boardState.every(row => 
-      Array.isArray(row) && 
-      row.length === 19 && 
+    const validBoard = question.boardState.every(row =>
+      Array.isArray(row) &&
+      row.length === 19 &&
       row.every(cell => cell === null || cell === 'black' || cell === 'white')
     );
     if (!validBoard) {
@@ -397,7 +399,7 @@ function validateQuestionData(question) {
       if (typeof point.col !== 'number' || point.col < 0 || point.col > 18) {
         errors.push(`candidatePoints[${index}].col必须是0-18的数字`);
       }
-      
+
       // 改进winRate验证 - 支持string和number
       const winRate = parseFloat(point.winRate);
       if (isNaN(winRate) || winRate < 0 || winRate > 100) {

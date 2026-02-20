@@ -31,6 +31,13 @@ const CandidatePointSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
+  score: {
+    type: Number,
+    required: false,
+    min: 0,
+    max: 10,
+    default: 0
+  },
   description: {
     type: String,
     required: true
@@ -65,7 +72,7 @@ const TestQuestionSchema = new mongoose.Schema({
     unique: true,
     index: true
   },
-  
+
   // 关联的SGF信息
   sgfHash: {
     type: String,
@@ -76,7 +83,7 @@ const TestQuestionSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  
+
   // 步数
   moveNumber: {
     type: Number,
@@ -84,49 +91,49 @@ const TestQuestionSchema = new mongoose.Schema({
     min: 1,
     index: true
   },
-  
+
   // 19x19棋盘状态
   boardState: {
     type: [[String]],
     required: true,
     validate: {
-      validator: function(board) {
+      validator: function (board) {
         if (!Array.isArray(board) || board.length !== 19) return false;
-        return board.every(row => 
-          Array.isArray(row) && 
-          row.length === 19 && 
+        return board.every(row =>
+          Array.isArray(row) &&
+          row.length === 19 &&
           row.every(cell => cell === null || cell === 'black' || cell === 'white')
         );
       },
       message: '棋盘状态必须是19x19的数组，值为null、"black"或"white"'
     }
   },
-  
+
   // 当前下棋方
   currentPlayer: {
     type: String,
     enum: ['black', 'white'],
     required: true
   },
-  
+
   // 候选点数组
   candidatePoints: {
     type: [CandidatePointSchema],
     required: true,
     validate: {
-      validator: function(points) {
+      validator: function (points) {
         return points.length >= 2; // 至少要有2个候选点
       },
       message: '至少需要2个候选点'
     }
   },
-  
+
   // 正确答案
   correctAnswer: {
     type: CorrectAnswerSchema,
     required: true
   },
-  
+
   // 胜率损失
   winRateLoss: {
     type: Number,
@@ -134,7 +141,7 @@ const TestQuestionSchema = new mongoose.Schema({
     min: 0,
     max: 100
   },
-  
+
   // 难度
   difficulty: {
     type: String,
@@ -142,13 +149,13 @@ const TestQuestionSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-  
+
   // 题目文本
   questionText: {
     type: String,
     required: true
   },
-  
+
   // 时间戳
   createdAt: {
     type: Date,
@@ -172,25 +179,25 @@ TestQuestionSchema.index({ id: 1 }, { unique: true });
 TestQuestionSchema.index({ sgfHash: 1, moveNumber: 1 }); // 复合索引
 
 // 更新 updatedAt 字段的中间件
-TestQuestionSchema.pre('save', function(next) {
+TestQuestionSchema.pre('save', function (next) {
   this.updatedAt = new Date();
   next();
 });
 
 // 静态方法：根据SGF哈希查找测试题
-TestQuestionSchema.statics.findBySgfHash = function(sgfHash) {
+TestQuestionSchema.statics.findBySgfHash = function (sgfHash) {
   return this.find({ sgfHash });
 };
 
 // 静态方法：根据难度查找测试题
-TestQuestionSchema.statics.findByDifficulty = function(difficulty) {
+TestQuestionSchema.statics.findByDifficulty = function (difficulty) {
   return this.find({ difficulty });
 };
 
 // 静态方法：获取统计信息
-TestQuestionSchema.statics.getStats = async function() {
+TestQuestionSchema.statics.getStats = async function () {
   const totalQuestions = await this.countDocuments();
-  
+
   const difficultyStats = await this.aggregate([
     {
       $group: {
@@ -199,7 +206,7 @@ TestQuestionSchema.statics.getStats = async function() {
       }
     }
   ]);
-  
+
   const sgfStats = await this.aggregate([
     {
       $group: {
@@ -216,19 +223,19 @@ TestQuestionSchema.statics.getStats = async function() {
       }
     }
   ]);
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const questionsCreatedToday = await this.countDocuments({
     createdAt: { $gte: today }
   });
-  
+
   const weekAgo = new Date();
   weekAgo.setDate(weekAgo.getDate() - 7);
   const questionsCreatedThisWeek = await this.countDocuments({
     createdAt: { $gte: weekAgo }
   });
-  
+
   return {
     totalQuestions,
     difficultyStats: difficultyStats.reduce((acc, item) => {
@@ -244,11 +251,11 @@ TestQuestionSchema.statics.getStats = async function() {
 };
 
 // 实例方法：验证候选点坐标
-TestQuestionSchema.methods.validateCandidatePoints = function() {
+TestQuestionSchema.methods.validateCandidatePoints = function () {
   return this.candidatePoints.every(point => {
-    return point.row >= 0 && point.row <= 18 && 
-           point.col >= 0 && point.col <= 18 &&
-           point.winRate >= 0 && point.winRate <= 100;
+    return point.row >= 0 && point.row <= 18 &&
+      point.col >= 0 && point.col <= 18 &&
+      point.winRate >= 0 && point.winRate <= 100;
   });
 };
 
