@@ -40,7 +40,13 @@ const CandidatePointSchema = new mongoose.Schema({
   },
   description: {
     type: String,
-    required: true
+    required: false
+  },
+  winRateLoss: {
+    type: Number,
+    required: false,
+    min: 0,
+    max: 100
   }
 }, { _id: false });
 
