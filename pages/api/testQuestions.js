@@ -32,8 +32,10 @@ async function handler(req, res) {
     return await createTestQuestions(req, res);
   } else if (req.method === 'GET') {
     return await getTestQuestions(req, res);
+  } else if (req.method === 'PATCH') {
+    return await updateTestQuestions(req, res);
   } else {
-    res.setHeader('Allow', ['POST', 'GET']);
+    res.setHeader('Allow', ['POST', 'GET', 'PATCH']);
     return res.status(405).json({
       success: false,
       message: `Method ${req.method} Not Allowed`
@@ -229,6 +231,51 @@ async function createTestQuestions(req, res) {
   }
 }
 
+// PATCH: 批量更新测试题（AI验证后更新）
+async function updateTestQuestions(req, res) {
+  try {
+    const { questions } = req.body;
+    if (!questions || !Array.isArray(questions) || questions.length === 0) {
+      return res.status(400).json({ success: false, message: 'questions数组是必需的' });
+    }
+
+    const results = [];
+    for (const q of questions) {
+      if (!q.id) {
+        results.push({ id: q.id, success: false, error: '缺少id' });
+        continue;
+      }
+      try {
+        const updateData = { ...q, updatedAt: new Date() };
+        delete updateData.id; // id不能被更新
+        delete updateData._id;
+        const updated = await TestQuestion.findOneAndUpdate(
+          { id: q.id },
+          { $set: updateData },
+          { new: true }
+        );
+        if (updated) {
+          results.push({ id: q.id, success: true });
+        } else {
+          results.push({ id: q.id, success: false, error: '题目不存在' });
+        }
+      } catch (err) {
+        results.push({ id: q.id, success: false, error: err.message });
+      }
+    }
+
+    const successCount = results.filter(r => r.success).length;
+    return res.status(200).json({
+      success: true,
+      message: `更新完成: ${successCount}/${questions.length}`,
+      data: { results, successCount, totalCount: questions.length }
+    });
+  } catch (error) {
+    console.error('✗ 更新测试题失败:', error);
+    return res.status(500).json({ success: false, message: '服务器内部错误', error: error.message });
+  }
+}
+
 // 获取测试题列表
 async function getTestQuestions(req, res) {
   try {
@@ -236,11 +283,12 @@ async function getTestQuestions(req, res) {
       page = 1,
       limit = 20,
       sgfHash,
-      moveNumber, // 添加 moveNumber 支持
+      moveNumber,
       difficulty,
+      verificationStatus, // 新增：按验证状态过滤
       sortBy = 'createdAt',
       sortOrder = 'desc',
-      includeDetails = true // 修改默认值为true，确保boardState等重要数据默认返回
+      includeDetails = true
     } = req.query;
 
     // 验证分页参数
@@ -251,9 +299,12 @@ async function getTestQuestions(req, res) {
     // 构建查询条件
     const filter = {};
     if (sgfHash) filter.sgfHash = sgfHash;
-    if (moveNumber) filter.moveNumber = parseInt(moveNumber); // 添加 moveNumber 过滤
+    if (moveNumber) filter.moveNumber = parseInt(moveNumber);
     if (difficulty && ['easy', 'medium', 'hard'].includes(difficulty)) {
       filter.difficulty = difficulty;
+    }
+    if (verificationStatus && ['pending', 'verified', 'failed'].includes(verificationStatus)) {
+      filter.verificationStatus = verificationStatus;
     }
 
     // 构建排序条件
@@ -355,6 +406,7 @@ async function getTestQuestions(req, res) {
 // 验证测试题数据格式
 function validateQuestionData(question) {
   const errors = [];
+  const isPending = question.verificationStatus === 'pending';
 
   // 必需字段验证
   if (!question.id) errors.push('id字段是必需的');
@@ -385,7 +437,7 @@ function validateQuestionData(question) {
     }
   }
 
-  // 候选点验证 - 改进winRate验证
+  // 候选点验证
   if (!Array.isArray(question.candidatePoints) || question.candidatePoints.length < 2) {
     errors.push('candidatePoints必须是包含至少2个元素的数组');
   } else {
@@ -399,32 +451,37 @@ function validateQuestionData(question) {
       if (typeof point.col !== 'number' || point.col < 0 || point.col > 18) {
         errors.push(`candidatePoints[${index}].col必须是0-18的数字`);
       }
-
-      // 改进winRate验证 - 支持string和number
-      const winRate = parseFloat(point.winRate);
-      if (isNaN(winRate) || winRate < 0 || winRate > 100) {
-        errors.push(`candidatePoints[${index}].winRate必须是0-100的数字，当前值: ${point.winRate}`);
+      // pending 题目允许 winRate=0
+      if (!isPending) {
+        const winRate = parseFloat(point.winRate);
+        if (isNaN(winRate) || winRate < 0 || winRate > 100) {
+          errors.push(`candidatePoints[${index}].winRate必须是0-100的数字，当前值: ${point.winRate}`);
+        }
       }
     });
   }
 
-  // 正确答案验证 - 改进winRate验证
+  // 正确答案验证 - pending 题目放宽
   if (!question.correctAnswer) {
     errors.push('correctAnswer字段是必需的');
   } else {
-    const winRate = parseFloat(question.correctAnswer.winRate);
-    if (isNaN(winRate) || winRate < 0 || winRate > 100) {
-      errors.push(`correctAnswer.winRate必须是0-100的数字，当前值: ${question.correctAnswer.winRate}`);
-    }
-    if (!question.correctAnswer.explanation) {
-      errors.push('correctAnswer.explanation字段是必需的');
+    if (!isPending) {
+      const winRate = parseFloat(question.correctAnswer.winRate);
+      if (isNaN(winRate) || winRate < 0 || winRate > 100) {
+        errors.push(`correctAnswer.winRate必须是0-100的数字，当前值: ${question.correctAnswer.winRate}`);
+      }
+      if (!question.correctAnswer.explanation) {
+        errors.push('correctAnswer.explanation字段是必需的');
+      }
     }
   }
 
-  // 胜率损失验证 - 改进验证
-  const winRateLoss = parseFloat(question.winRateLoss);
-  if (isNaN(winRateLoss) || winRateLoss < 0 || winRateLoss > 100) {
-    errors.push(`winRateLoss必须是0-100的数字，当前值: ${question.winRateLoss}`);
+  // 胜率损失验证 - pending 题目允许 0
+  if (!isPending) {
+    const winRateLoss = parseFloat(question.winRateLoss);
+    if (isNaN(winRateLoss) || winRateLoss < 0 || winRateLoss > 100) {
+      errors.push(`winRateLoss必须是0-100的数字，当前值: ${question.winRateLoss}`);
+    }
   }
 
   return errors;

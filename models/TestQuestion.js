@@ -148,6 +148,18 @@ const TestQuestionSchema = new mongoose.Schema({
     max: 100
   },
 
+  // 验证状态
+  verificationStatus: {
+    type: String,
+    enum: ['pending', 'verified', 'failed'],
+    default: 'verified',
+    index: true
+  },
+  verifiedAt: {
+    type: Date,
+    default: null
+  },
+
   // 难度
   difficulty: {
     type: String,
