@@ -7,11 +7,13 @@ async function handler(req, res) {
   }
 
   try {
-    const katagoServerUrl = 'http://192.168.0.249:8080';
-    
+    // 🔥 修复：支持从 Header 获取目标地址
+    let katagoServerUrl = req.headers['x-target-server'] || process.env.KATAGO_SERVER_URL || 'http://192.168.0.162:8080';
+    katagoServerUrl = katagoServerUrl.replace(/\/$/, '');
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
-    
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 增加超时到 20s
+
     const response = await fetch(`${katagoServerUrl}/health`, {
       method: 'GET',
       signal: controller.signal,
@@ -43,12 +45,12 @@ async function handler(req, res) {
 
   } catch (error) {
     console.error('KataGo health check error:', error);
-    
+
     let status = 'unreachable';
     if (error.name === 'AbortError') {
       status = 'timeout';
     }
-    
+
     res.status(503).json({
       success: false,
       status: status,

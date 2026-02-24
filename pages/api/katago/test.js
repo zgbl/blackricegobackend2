@@ -6,7 +6,7 @@ async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const katagoServerUrl = 'http://192.168.0.249:8080';
+  const katagoServerUrl = process.env.KATAGO_SERVER_URL || 'http://192.168.0.162:8080';
   const testResults = {
     serverUrl: katagoServerUrl,
     timestamp: new Date().toISOString(),
@@ -17,14 +17,14 @@ async function handler(req, res) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
+
     const response = await fetch(katagoServerUrl, {
       method: 'GET',
       signal: controller.signal
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     testResults.tests.push({
       name: 'Basic Connection',
       status: 'success',
@@ -43,14 +43,14 @@ async function handler(req, res) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
-    
+
     const response = await fetch(`${katagoServerUrl}/health`, {
       method: 'GET',
       signal: controller.signal
     });
-    
+
     clearTimeout(timeoutId);
-    
+
     testResults.tests.push({
       name: 'Health Endpoint',
       status: response.ok ? 'success' : 'warning',
@@ -67,19 +67,19 @@ async function handler(req, res) {
 
   // 测试 3: 其他可能的端点
   const endpoints = ['/info', '/version', '/analyze'];
-  
+
   for (const endpoint of endpoints) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 2000);
-      
+
       const response = await fetch(`${katagoServerUrl}${endpoint}`, {
         method: 'GET',
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       testResults.tests.push({
         name: `Endpoint ${endpoint}`,
         status: response.ok ? 'success' : 'warning',
@@ -98,7 +98,7 @@ async function handler(req, res) {
   // 计算总体状态
   const successCount = testResults.tests.filter(t => t.status === 'success').length;
   const totalTests = testResults.tests.length;
-  
+
   testResults.summary = {
     totalTests,
     successCount,

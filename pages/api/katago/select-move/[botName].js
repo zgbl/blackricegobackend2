@@ -8,7 +8,11 @@ async function handler(req, res) {
     }
 
     try {
-        const katagoServerUrl = 'http://192.168.0.249:8080';
+        // 🔥 修复：优先从 Header 中获取目标地址，实现真正的动态代理
+        let katagoServerUrl = req.headers['x-target-server'] || process.env.KATAGO_SERVER_URL || 'http://192.168.0.162:8080';
+
+        // 确保没有末尾斜杠
+        katagoServerUrl = katagoServerUrl.replace(/\/$/, '');
 
         // Construct the target URL
         const targetUrl = `${katagoServerUrl}/select-move/${botName}`;

@@ -8,8 +8,8 @@ async function handler(req, res) {
 
   try {
     // KataGo 服务器地址
-    const katagoServerUrl = 'http://192.168.0.249:8080';
-    
+    const katagoServerUrl = process.env.KATAGO_SERVER_URL || 'http://192.168.0.162:8080';
+
     // 提供 KataGo 服务器信息
     let serverInfo = {
       name: "KataGo Server",
@@ -23,7 +23,7 @@ async function handler(req, res) {
       },
       features: [
         "SGF Analysis",
-        "Position Evaluation", 
+        "Position Evaluation",
         "Move Suggestions",
         "Territory Estimation"
       ],
@@ -34,7 +34,7 @@ async function handler(req, res) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      
+
       const healthResponse = await fetch(`${katagoServerUrl}/health`, {
         method: 'GET',
         signal: controller.signal,
@@ -42,13 +42,13 @@ async function handler(req, res) {
           'Accept': 'text/plain, application/json',
         }
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (healthResponse.ok) {
         serverInfo.status = "healthy";
         serverInfo.httpStatus = healthResponse.status;
-        
+
         // 尝试读取响应内容
         try {
           const healthData = await healthResponse.text();

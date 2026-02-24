@@ -90,12 +90,27 @@ const TestQuestionSchema = new mongoose.Schema({
     required: true
   },
 
+  // 比赛信息
+  blackPlayer: { type: String, default: '' },
+  whitePlayer: { type: String, default: '' },
+  blackRank: { type: String, default: '' },
+  whiteRank: { type: String, default: '' },
+  gameDate: { type: String, default: '' },
+  result: { type: String, default: '' },
+
   // 步数
   moveNumber: {
     type: Number,
     required: true,
     min: 1,
     index: true
+  },
+
+  // 🔥 新增：最后一步着法信息 (用于显示标记)
+  lastMove: {
+    row: Number,
+    col: Number,
+    color: String
   },
 
   // 19x19棋盘状态

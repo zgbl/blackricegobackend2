@@ -59,11 +59,13 @@ const SGFAnalysisSchema = new mongoose.Schema({
     fileSize: { type: Number, required: true },
     uploadPath: { type: String, required: true }
   },
-  
+
   // 游戏基本信息
   gameInfo: {
     blackPlayer: { type: String, default: '' },
     whitePlayer: { type: String, default: '' },
+    blackRank: { type: String, default: '' },
+    whiteRank: { type: String, default: '' },
     result: { type: String, default: '' },
     komi: { type: Number, default: 6.5 },
     handicap: { type: Number, default: 0 },
@@ -72,7 +74,7 @@ const SGFAnalysisSchema = new mongoose.Schema({
     event: { type: String, default: '' },
     round: { type: String, default: '' }
   },
-  
+
   // 分析配置
   analysisConfig: {
     katagoVersion: { type: String, required: true },
@@ -82,10 +84,10 @@ const SGFAnalysisSchema = new mongoose.Schema({
     startMove: { type: Number, default: 1 },
     endMove: { type: Number, required: true }
   },
-  
+
   // 每步的分析结果
   moveAnalyses: [MoveAnalysisSchema],
-  
+
   // 整体统计
   statistics: {
     totalMoves: { type: Number, required: true },
@@ -99,7 +101,7 @@ const SGFAnalysisSchema = new mongoose.Schema({
     mistakes: { type: Number, default: 0 }, // 错误手数
     inaccuracies: { type: Number, default: 0 } // 不准确手数
   },
-  
+
   // 用户信息
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -110,38 +112,38 @@ const SGFAnalysisSchema = new mongoose.Schema({
     type: String,
     default: 'Anonymous'
   },
-  
+
   // 分析状态
   status: {
     type: String,
     enum: ['pending', 'analyzing', 'completed', 'failed'],
     default: 'pending'
   },
-  
+
   // 错误信息（如果分析失败）
   errorMessage: {
     type: String,
     default: null
   },
-  
+
   // 是否公开
   isPublic: {
     type: Boolean,
     default: false
   },
-  
+
   // 标签
   tags: [{
     type: String,
     trim: true
   }],
-  
+
   // 备注
   notes: {
     type: String,
     default: ''
   },
-  
+
   // 时间戳
   createdAt: {
     type: Date,
@@ -166,7 +168,7 @@ SGFAnalysisSchema.index({ status: 1 });
 SGFAnalysisSchema.index({ isPublic: 1, createdAt: -1 });
 
 // 更新 updatedAt 字段
-SGFAnalysisSchema.pre('save', function(next) {
+SGFAnalysisSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
   if (this.status === 'completed' && !this.completedAt) {
     this.completedAt = Date.now();
@@ -175,15 +177,15 @@ SGFAnalysisSchema.pre('save', function(next) {
 });
 
 // 计算统计信息的方法
-SGFAnalysisSchema.methods.calculateStatistics = function() {
+SGFAnalysisSchema.methods.calculateStatistics = function () {
   if (this.moveAnalyses.length === 0) return;
-  
+
   let blackWinrates = [];
   let whiteWinrates = [];
   let blunders = 0;
   let mistakes = 0;
   let inaccuracies = 0;
-  
+
   this.moveAnalyses.forEach(move => {
     if (move.analysis && move.analysis.evaluation) {
       if (move.player === 'black') {
@@ -191,7 +193,7 @@ SGFAnalysisSchema.methods.calculateStatistics = function() {
       } else {
         whiteWinrates.push(move.analysis.evaluation.winrate);
       }
-      
+
       // 根据分数损失分类错误
       const scoreLoss = move.analysis.scoreLoss || 0;
       if (scoreLoss > 20) blunders++;
@@ -199,7 +201,7 @@ SGFAnalysisSchema.methods.calculateStatistics = function() {
       else if (scoreLoss > 5) inaccuracies++;
     }
   });
-  
+
   this.statistics = {
     totalMoves: this.moveAnalyses.length,
     analyzedMoves: this.moveAnalyses.filter(m => m.analysis).length,
