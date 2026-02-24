@@ -8,7 +8,9 @@ async function handler(req, res) {
 
   try {
     // 🔥 修复：支持从 Header 获取目标地址
-    let katagoServerUrl = req.headers['x-target-server'] || process.env.KATAGO_SERVER_URL || 'http://192.168.0.162:8080';
+    const fallbackUrl = process.env.KATAGO_SERVER_URL || 'http://192.168.0.162:8080';
+    let katagoServerUrl = req.headers['x-target-server'] || fallbackUrl;
+    console.log(`🏥 Health check to: ${katagoServerUrl}/health`);
     katagoServerUrl = katagoServerUrl.replace(/\/$/, '');
 
     const controller = new AbortController();
@@ -55,7 +57,7 @@ async function handler(req, res) {
       success: false,
       status: status,
       error: error.message,
-      serverUrl: 'http://192.168.0.249:8080',
+      serverUrl: katagoServerUrl || 'http://192.168.0.162:8080',
       timestamp: new Date().toISOString()
     });
   }

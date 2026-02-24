@@ -9,6 +9,7 @@ async function handler(req, res) {
   try {
     // KataGo 服务器地址
     const katagoServerUrl = process.env.KATAGO_SERVER_URL || 'http://192.168.0.162:8080';
+    console.log(`ℹ️ Info request for: ${katagoServerUrl}`);
 
     // 提供 KataGo 服务器信息
     let serverInfo = {
