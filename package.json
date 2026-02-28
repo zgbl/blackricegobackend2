@@ -7,11 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "backup": "node scripts/backup.js"
+    "backup": "node scripts/backup.js",
+    "worker": "node --experimental-vm-modules scripts/startWorker.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "bull": "^4.16.5",
     "cors": "^2.8.5",
+    "ioredis": "^5.10.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.3",
     "multer": "^2.0.2",

@@ -120,6 +120,26 @@ const SGFAnalysisSchema = new mongoose.Schema({
     default: 'pending'
   },
 
+  // Bull Queue 相关字段
+  jobId: {
+    type: String,
+    default: null,
+    index: true  // 按 jobId 快速查找
+  },
+  analysisProgress: {
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
+  },
+
+  // KataGo 原始分析结果（由 Worker 写入）
+  // 格式: [{ turn: Number, data: KataGoResponse }, ...]
+  katagoResults: {
+    type: Array,
+    default: []
+  },
+
   // 错误信息（如果分析失败）
   errorMessage: {
     type: String,

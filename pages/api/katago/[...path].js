@@ -20,7 +20,7 @@ async function handler(req, res) {
     try {
         const controller = new AbortController();
         // 根据请求类型设置不同的超时
-        const timeoutMs = pathStr.includes('select-move') || pathStr.includes('analyze') ? 60000 : 15000;
+        const timeoutMs = pathStr.includes('select-move') || pathStr.includes('analyze') ? 120000 : 15000;
         const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
         const fetchOptions = {
