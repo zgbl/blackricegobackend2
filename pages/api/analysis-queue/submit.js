@@ -7,6 +7,10 @@ import SGFAnalysis from '../../../models/SGFAnalysis';
 import { submitAnalysisJob } from '../../../lib/analysisQueue';
 import withCors from '../withCors';
 
+export const config = {
+    maxDuration: 60,
+};
+
 async function handler(req, res) {
     if (req.method !== 'POST') {
         res.setHeader('Allow', ['POST']);
