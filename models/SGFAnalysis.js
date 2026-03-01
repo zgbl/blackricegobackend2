@@ -57,7 +57,7 @@ const SGFAnalysisSchema = new mongoose.Schema({
     filename: { type: String, required: true },
     originalName: { type: String, required: true },
     fileSize: { type: Number, required: true },
-    uploadPath: { type: String, required: true }
+    uploadPath: { type: String, required: false }
   },
 
   // 游戏基本信息

@@ -59,7 +59,7 @@ async function handler(req, res) {
                 filename: sgfInfo.filename || `sgf_${Date.now()}.sgf`,
                 originalName: sgfInfo.originalName || sgfInfo.filename || 'unknown.sgf',
                 fileSize: sgfInfo.fileSize || (sgfContent ? sgfContent.length : 0),
-                uploadPath: sgfInfo.uploadPath || '',
+                uploadPath: sgfInfo.uploadPath || undefined,
             },
             gameInfo: gameInfo || {},
             analysisConfig: {
