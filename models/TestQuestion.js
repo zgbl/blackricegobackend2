@@ -106,6 +106,21 @@ const TestQuestionSchema = new mongoose.Schema({
     index: true
   },
 
+  // 专辑连结
+  albumId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Album',
+    required: false,
+    index: true
+  },
+
+  // 制作人
+  producer: {
+    type: String,
+    default: '匿名制作人',
+    index: true
+  },
+
   // 🔥 新增：最后一步着法信息 (用于显示标记)
   lastMove: {
     row: Number,
